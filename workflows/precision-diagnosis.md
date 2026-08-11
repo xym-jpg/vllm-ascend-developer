@@ -132,9 +132,17 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ssh_utils.py" docker-exec pd-separated.p[
 
 ### 第 3 步：执行测试
 
-调用 **test-runner.md** 模块，执行测试脚本。
+调用 **test-runner.md** 模块，直接执行固定测试执行器。不要生成、上传或手工拼接 curl 脚本：
 
-发送推理请求，捕获输出到日志文件。
+```bash
+# 单机模式
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/test_runner.py" --project-root "${CLAUDE_PROJECT_DIR}" standalone
+
+# PD 分离模式默认从第一个 P 节点发起
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/test_runner.py" --project-root "${CLAUDE_PROJECT_DIR}" pd-separated.p[0]
+```
+
+执行器会遍历 `test.yaml` 全部用例和 prompt，在每次推理前执行严格健康检查，并将本次 HTTP 结果写入 `{run_dir}/logs/test_results.jsonl`。返回失败时按 `stage` 报告，不得改写命令、手工补发 curl 或读取脚本源码猜测。
 
 ### 第 4 步：验证结果
 

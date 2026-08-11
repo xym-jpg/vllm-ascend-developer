@@ -21,12 +21,9 @@
 
 ### 步骤 1：获取实际输出
 
-```bash
-# 运行测试
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ssh_utils.py" docker-exec standalone "bash {standalone.work_dir}/curl_test.sh"
-```
+读取 test-runner 返回的 `results_file`，固定为本地 `{run_dir}/logs/test_results.jsonl`。不要再次发送远程请求，也不要重新生成或执行 `curl_test.sh`。
 
-从 `ssh_utils.py` 返回 JSON 的 `stdout` 字段读取推理响应，再解析响应中的 `choices[0].text`；不要使用未经路径策略审计的本地 `python -c` 管道。
+逐行读取 JSONL。只对 `success: true` 的记录解析 `response.body`：completion 取 `choices[0].text`，chat completion 取 `choices[0].message.content`。请求失败的记录直接判为验证失败并保留其中的 `stage`、`health` 和 `error` 作为证据。
 
 ### 步骤 2：和预期输出对比
 
@@ -40,7 +37,7 @@ test = cfg['tests'][0]
 expected = test['expected_output']
 mode = test['comparison_mode']
 
-actual = " porch of Tara, your father%27s"  # 步骤 1 的输出
+actual = " porch of Tara, your father%27s"  # 从对应 JSONL 记录解析的输出
 
 if mode == 'exact':
     ok = (actual == expected)

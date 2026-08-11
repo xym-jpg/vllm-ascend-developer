@@ -4,7 +4,7 @@
 # 使用前请根据实际环境修改对应字段
 #
 # ===== 全局配置 =====
-#   output_log:     测试输出日志存放路径
+#   output_log:     旧版 curl 兼容字段；主流程固定写入 .dev/run/logs/test_results.jsonl
 #   timeout:        默认超时时间（秒），单条测试可覆盖
 #
 # ===== 测试用例字段说明 =====
@@ -27,7 +27,7 @@
 # ============================================================================
 
 # 全局配置
-output_log: "/home/user/workspace/curl_test.log"                                           # 输出日志路径
+output_log: "/home/user/workspace/curl_test.log"                         # 仅供旧版 curl 流程兼容
 timeout: 60                                                             # 默认超时（秒）
 
 # 测试用例列表

@@ -1,0 +1,10 @@
+{
+  "success": false,
+  "stage": "health",
+  "health": {
+    "status": null,
+    "elapsed_ms": 1000
+  },
+  "response": null,
+  "error": "URLError: connection refused"
+}

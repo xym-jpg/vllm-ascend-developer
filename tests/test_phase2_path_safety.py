@@ -749,7 +749,7 @@ tests:
         )
         self.assertNotIn('resp["success"] = True', execute_block)
 
-    def test_curl_upload_and_container_execution_use_same_shared_path(self):
+    def test_core_runner_avoids_upload_and_legacy_curl_paths_stay_consistent(self):
         shared_script = "{standalone.work_dir}/curl_test.sh"
         wrong_script = "{docker.work_dir}/curl_test.sh"
         test_runner = (ROOT / "modules" / "test-runner.md").read_text(
@@ -762,13 +762,12 @@ tests:
             ROOT / "workflows" / "precision-diagnosis.md"
         ).read_text(encoding="utf-8")
 
-        self.assertIn(
-            f'upload standalone "{{run_dir}}/generated/curl_test.sh" "{shared_script}"',
-            test_runner,
-        )
+        self.assertIn("scripts/test_runner.py", test_runner)
+        self.assertNotIn("ssh_utils.py\" upload", test_runner)
+        self.assertNotIn(f"bash {wrong_script}", test_runner)
+        self.assertIn("test_results.jsonl", verifier)
+        self.assertNotIn(f"bash {shared_script}", verifier)
         for path, source in (
-            ("modules/test-runner.md", test_runner),
-            ("modules/verifier.md", verifier),
             ("workflows/precision-diagnosis.md", workflow),
         ):
             with self.subTest(path=path):

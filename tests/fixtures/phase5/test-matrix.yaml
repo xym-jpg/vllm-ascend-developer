@@ -1,0 +1,21 @@
+timeout: 30
+tests:
+  - name: completion
+    endpoint: http://127.0.0.1:8088/v1/completions
+    params:
+      model: demo-model
+      max_tokens: 8
+      temperature: 0
+      top_p: 0.9
+      stream: false
+    prompts:
+      - alpha
+      - beta
+  - name: chat
+    endpoint: http://127.0.0.1:8088/v1/chat/completions
+    params:
+      model: demo-model
+      max_tokens: 8
+      seed: 7
+    prompts:
+      - gamma

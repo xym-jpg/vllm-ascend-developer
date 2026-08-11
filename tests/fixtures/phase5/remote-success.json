@@ -1,0 +1,14 @@
+{
+  "success": true,
+  "stage": "complete",
+  "health": {
+    "status": 200,
+    "elapsed_ms": 12
+  },
+  "response": {
+    "status": 200,
+    "body": "{\"choices\":[{\"text\":\"ok\"}]}",
+    "elapsed_ms": 24
+  },
+  "error": ""
+}
