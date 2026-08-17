@@ -146,7 +146,13 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/test_runner.py" --project-root "${CLAUDE_
 
 ### 第 4 步：验证结果
 
-调用 **verifier.md** 模块，将测试输出与预期结果对比。
+调用 **verifier.md** 模块，直接执行固定验证器；不要让 Agent 手工解析或比较回复：
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/verifier.py" --project-root "${CLAUDE_PROJECT_DIR}"
+```
+
+验证器读取 `{run_dir}/logs/test_results.jsonl`，把统一提取的 `actual_output`、三种比较结果和基础乱码/复读检查写入 `{run_dir}/logs/verification_results.jsonl`。原始 HTTP body 不会被修改。
 
 - ✅ **验证通过** → 精度诊断完成
   - 如有修复记录，更新 `{run_dir}/records/fix_N.md` 标记为成功

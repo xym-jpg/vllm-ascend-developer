@@ -2,75 +2,49 @@
 
 ## 概述
 
-将测试输出与预期结果进行对比，判断精度是否达标。支持三种比较模式。
+使用固定脚本解析 `test_results.jsonl`，提取模型回复并执行 exact、contains、regex 比较和基础输出质量检查。
 
-## 使用方式
+## 固定命令
 
-```
-在当前会话中，获取测试输出后运行验证。
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/verifier.py" --project-root "${CLAUDE_PROJECT_DIR}"
 ```
 
 ## 前置条件
 
-- 测试已执行完成，有可读的输出日志
+- test-runner 已生成 `{run_dir}/logs/test_results.jsonl`
 - 测试已执行，`config/test.yaml` 中每条用例已配置 `expected_output` 和 `comparison_mode`
 
 ---
 
 ## 验证步骤
 
-### 步骤 1：获取实际输出
+## 固定行为
 
-读取 test-runner 返回的 `results_file`，固定为本地 `{run_dir}/logs/test_results.jsonl`。不要再次发送远程请求，也不要重新生成或执行 `curl_test.sh`。
+1. 按 `test_index` 和 `prompt_index` 将 test.yaml 与测试结果严格对应；重复、缺失或未知记录直接拒绝验证。
+2. completion 提取 `choices[0].text`；chat completion 提取 `choices[0].message.content`；流式响应合并 SSE 中的 `text` 或 `delta.content`。
+3. `expected_output` 可以是所有 prompts 共用的字符串，也可以是与 `prompts` 等长的字符串列表。
+4. 执行 `exact`、`contains` 或 `regex`；未知模式和非法正则直接拒绝。
+5. 检查 Unicode replacement character、异常控制字符和连续三次的重复片段。
+6. 原始 `{run_dir}/logs/test_results.jsonl` 保持不变；标准化结果原子覆盖写入 `{run_dir}/logs/verification_results.jsonl`。
 
-逐行读取 JSONL。只对 `success: true` 的记录解析 `response.body`：completion 取 `choices[0].text`，chat completion 取 `choices[0].message.content`。请求失败的记录直接判为验证失败并保留其中的 `stage`、`health` 和 `error` 作为证据。
+每行验证结果包含 `actual_output`、`expected_output`、`comparison_mode`、`comparison_passed`、`quality_passed`、`quality_issues`、`passed` 和错误信息。因此模型生成的回复可以直接从 `actual_output` 查看，同时原始 HTTP body 仍保留在源文件中。
 
-### 步骤 2：和预期输出对比
-
-从 `config/test.yaml` 读取 `expected_output` 和 `comparison_mode`，与步骤 1 的输出对比。
-
-```python
-# 示例：在 Python 中读取 test.yaml 并对比
-import yaml
-cfg = yaml.safe_load(open('config/test.yaml'))
-test = cfg['tests'][0]
-expected = test['expected_output']
-mode = test['comparison_mode']
-
-actual = " porch of Tara, your father%27s"  # 从对应 JSONL 记录解析的输出
-
-if mode == 'exact':
-    ok = (actual == expected)
-elif mode == 'contains':
-    ok = (expected in actual)
-else:  # regex
-    import re
-    ok = bool(re.search(expected, actual))
-```
-
-### 步骤 3：输出验证结果
-
-- ✅ **验证通过** → 精度正常，工作流结束
-- ❌ **验证不通过** → 记录差异，进入 `log-analyzer.md` 分析原因
+- 命令 `success: true`：所有请求均完成解析、比较通过且质量检查通过。
+- 命令 `success: false`：查看 `results_file` 中失败记录，然后进入日志分析；不要让 Agent 手工重做比较或再次发送请求。
 
 ---
 
-## 验证结果格式
+## 验证结果示例
 
-```
-=== 验证结果 ===
-状态: FAIL
-比较模式: exact
-预期输出: "B"
-实际输出: "A"
-差异: 首字符不同（预期 B，实际 A）
-================
+```json
+{"test_index": 0, "prompt_index": 0, "actual_output": "A", "expected_output": "B", "comparison_mode": "exact", "comparison_passed": false, "quality_passed": true, "quality_issues": [], "passed": false, "error": "exact 比较不通过"}
 ```
 
 ---
 
 ## 常见问题
 
-1. **输出为空** — 服务可能未正确响应，检查服务状态
-2. **输出包含额外字符** — 考虑换用 `contains` 模式
-3. **随机性输出** — 如果模型输出有随机性，考虑多轮测试取统计结果
+1. **输出为空** — 空字符串仍是有效回复，可以按配置参与比较；解析失败时 `actual_output` 为 null。
+2. **输出包含额外字符** — 明确需要子串语义时使用 `contains`。
+3. **随机性输出** — 固定 seed 或使用符合需求的 regex；脚本不会擅自改变比较模式。

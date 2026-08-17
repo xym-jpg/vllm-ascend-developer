@@ -21,7 +21,7 @@
 #     stream:          是否流式返回
 #     seed:            随机种子
 #   prompts:         测试 prompt 列表（每条 prompt 独立发起一次请求）
-#   expected_output: 预期输出内容
+#   expected_output: 预期输出内容；可为所有 prompts 共用的字符串，或与 prompts 等长的字符串列表
 #   comparison_mode: 比较方式: "exact" | "contains" | "regex"
 #   timeout:         超时时间（秒），不填则使用全局默认值
 # ============================================================================

@@ -1,0 +1,21 @@
+tests:
+  - name: exact-completion
+    endpoint: http://127.0.0.1:8088/v1/completions
+    prompts:
+      - first
+    expected_output: answer
+    comparison_mode: exact
+  - name: contains-chat
+    endpoint: http://127.0.0.1:8088/v1/chat/completions
+    prompts:
+      - second
+    expected_output: 关键结果
+    comparison_mode: contains
+  - name: regex-stream
+    endpoint: http://127.0.0.1:8088/v1/chat/completions
+    params:
+      stream: true
+    prompts:
+      - third
+    expected_output: "value=\\d+"
+    comparison_mode: regex

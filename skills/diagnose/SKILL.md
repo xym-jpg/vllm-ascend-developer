@@ -51,6 +51,7 @@ skills/vllm-ascend-developer/
 │   ├── ssh_utils.py                # SSH 远程执行（exec/docker-exec/wait/upload/download）
 │   ├── preflight.py                # 容器 Python、导入状态与实际包来源的只读检查
 │   ├── test_runner.py              # 遍历 test.yaml、远程请求并写入本地 JSONL
+│   ├── verifier.py                 # 提取模型回复、比较预期值并检查输出质量
 │   ├── generate_curl.py            # 从 config/test.yaml 生成 curl 测试脚本
 │   └── path_policy.py              # 运行目录与 PreToolUse 路径安全策略
 ├── docs/                           # 经验文档（调试方法、定位案例）
@@ -105,7 +106,7 @@ Plugin 中的 `${CLAUDE_PLUGIN_ROOT}/config/*.yaml` 是只读模板。`bootstrap
 1. 初始化配置并执行容器 Python/import preflight
 2. 启动服务 → 确保服务就绪
 3. 执行测试 → `test_runner.py` 遍历全部用例并写入 `logs/test_results.jsonl`
-4. 验证结果 → 对比预期输出
+4. 验证结果 → `verifier.py` 生成带 `actual_output` 的标准化验证 JSONL
 5. 如果不通过 → 分析日志 → 修复代码 → 重新启动 → 重新测试
 
 ### 第三步：查看修复记录
@@ -206,6 +207,7 @@ pd-separated:
 14. **日志过多时只打一个 rank** — 使用 `dist.get_rank() == 0` 过滤
 15. **pip 使用清华源** — 默认 PyPI 下载可能超时，安装 Python 包时使用 `pip install <pkg> -i https://pypi.tuna.tsinghua.edu.cn/simple`
 16. **测试请求不手工拼接** — 主流程统一调用 `test_runner.py`；它在目标容器禁用代理、每次请求前检查 `/v1/models`，并固定写入 `{run_dir}/logs/test_results.jsonl`
+17. **验证不由 Agent 手工判断** — 主流程统一调用 `verifier.py`；原始 HTTP body 保留在 `test_results.jsonl`，模型回复与比较结果写入 `verification_results.jsonl`
 
 ---
 

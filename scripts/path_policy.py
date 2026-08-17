@@ -36,6 +36,7 @@ TRUSTED_SCRIPTS = {
     "preflight.py",
     "ssh_utils.py",
     "test_runner.py",
+    "verifier.py",
 }
 INTERPRETERS = {
     "bash",
